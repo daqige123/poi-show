@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<script src="static/js/echarts.js"></script>
+<script src="static/js/jquery-3.3.1.js"></script>
+<!-- 引入jquery.js -->
+<script src="static/echarts.min.js"></script>
+<script src="{{ url_for('static', filename='jquery-3.5.1.min.js') }}"></script>
+<script src="{{ url_for('static', filename='echarts.min.js') }}"></script>
+{#<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">#}
+
+
+<div class="content">
+    <div  class="top" id="chartmain" style="border:2px solid #666;width:49%;height:450px;" >  </div>
+
+    <div class="bottom" id ="bing" style="border:2px solid #666;width:49%;height:450px;">  </div>>
+</div>
+
+
+
+
+
+
+<script>
+    var myChart = echarts.init(document.getElementById('chartmain'));
+    $.get('/SQdata').done(function (data) {
+        option = {
+            angleAxis: {
+                type: 'category',
+                data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+            },
+            radiusAxis: {
+            },
+            polar: {
+            },
+            series: [{
+                type: 'bar',
+                data: [1, 2, 3, 4, 3, 5, 1],
+                coordinateSystem: 'polar',
+                name: 'A',
+                stack: 'a'
+            }, {
+                type: 'bar',
+                data: [2, 4, 6, 1, 3, 2, 1],
+                coordinateSystem: 'polar',
+                name: 'B',
+                stack: 'a'
+            }, {
+                type: 'bar',
+                data: [1, 2, 3, 4, 1, 2, 5],
+                coordinateSystem: 'polar',
+                name: 'C',
+                stack: 'a'
+            }],
+            legend: {
+                show: true,
+                data: ['A', 'B', 'C']
+            }
+        };
+        myChart.setOption(option);
+    });
+
+</script>
+
+
+
+
+<script type="text/javascript">
+    var myChart = echarts.init(document.getElementById('bing'));
+    $.get('/SQdata').done(function(b) {
+        SQ = JSON.parse(b);
+        {#alert(SQ.KindName);#}
+        var data = SQ.Knumber;
+        var cities = SQ.SQName;
+        var KindName = SQ.KindName;
+        var barHeight = 60;
+
+        option = {
+            title: {
+                text: 'POI商圈展示',
+                subtext: '每个商圈前3种POI'
+            },
+            legend: {
+                show: true,
+                data: ['范围', '类别二']
+            },
+            grid: {
+                top: 100
+            },
+            angleAxis: {
+                type: 'category',
+                data: cities
+            },
+            tooltip: {
+                show: true,
+                formatter: function (params) {
+                    var id = params.dataIndex;
+                    return cities[id] + '<br>' + KindName[id][1] +data[id][1] + '<br>' +KindName[id][2]+ data[id][2]+'<br>'+KindName[id][0] + data[id][0]  ;
+                }
+            },
+            radiusAxis: {
+            },
+            polar: {
+            },
+            series: [{
+                type: 'bar',
+                itemStyle: {
+                    color: 'transparent'
+                },
+                data: data.map(function (d) {
+                    return d[0];
+                }),
+                coordinateSystem: 'polar',
+                stack: '最大最小值',
+                silent: true
+            }, {
+                type: 'bar',
+                data: data.map(function (d) {
+                    return d[1] - d[0];
+                }),
+                coordinateSystem: 'polar',
+                name: '范围',
+                stack: '最大最小值'
+            }, {
+                type: 'bar',
+                itemStyle: {
+                    color: 'transparent'
+                },
+                data: data.map(function (d) {
+                    return d[2] - barHeight;
+                }),
+                coordinateSystem: 'polar',
+                stack: '类别二',
+                silent: true,
+                z: 10
+            }, {
+                type: 'bar',
+                data: data.map(function (d) {
+                    return barHeight * 2;
+                }),
+                coordinateSystem: 'polar',
+                name: '类别二',
+                stack: '类别二',
+                barGap: '-100%',
+                z: 10
+            }]
+        };
+
+        myChart.setOption(option);})
+
+</script>
+
+
+
+</body>
+</html>

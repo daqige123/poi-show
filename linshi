@@ -1,0 +1,1279 @@
+
+
+
+list = [{"id": 0, "category": 0, "name": "深水稻【60D】", "label": "深水稻【60D】", "symbolSize": 40, },
+            {"id": "1", "category": 1, "name": "Deep减water rice", "label": "Deep减water rice", "symbolSize": 20, },
+            {"id": "r", "category": 1, "name": "D浮稻", "label": "D浮稻", "symbolSize": 20, },
+            {"id": "f", "category": 1, "name": "D淀稻", "label": "D淀稻", "symbolSize": 20, },
+            {"id": "k", "category": 1, "name": "S1水稻", "label": "S1水稻", "symbolSize": 20, },
+            {"id": 5, "category": 2, "name": "S2不育系 ", "label": "S2不育系 ", "symbolSize": 20, },
+            {"id": 6, "category": 2, "name": "S2不育系", "label": "S2不育系", "symbolSize": 20, },
+            {"id": 7, "category": 2, "name": "S2人为土", "label": "S2人为土", "symbolSize": 20, },
+            {"id": 8, "category": 2, "name": "S2 土壤类型(人为）", "label": "S2 土壤类型(人为）", "symbolSize": 20, },
+            {"id": 9, "category": 2, "name": "S2稻", "label": "S2稻", "symbolSize": 20, }
+            ]
+    links = [{ "source": 1, "target": 0, "name": "EnglishName" },
+                    { "source": 2, "target": 0, "name": "equipment" },
+                    { "source": 3, "target": 0, "name": "equipment" },
+                    { "source": 5, "target": "k", "name": "superClass" },
+                    { "source": 6, "target": 4, "name": "superClass" },
+                    { "source": 7, "target": 4, "name": "superClass" },
+                    { "source": 8, "target": 4, "name": "superClass" },
+                    { "source": 9, "target": 4, "name": "superClass" },
+                    { "source": 4, "target": 0, "name": "superClass" }
+             ]
+
+<form action="http://localhost:5000/"  method="POST">
+        <p>输入商圈：<input type="text" name="SQ" > </p>
+        <button type="submit">提交</button></form>
+
+
+app.py
+from flask import Flask, render_template, request
+import graph
+import json
+import mytest
+
+app = Flask(__name__)
+
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    a = "小寨"
+    if request.method == 'POST':
+        a = request.form.get('SQ')
+        print(a)
+        return render_template('index.html', a=a)
+    return render_template('index.html', a=a)
+
+
+@app.route('/data/<string:a>', methods=['GET', 'POST'])
+def get_data(a):
+    # if request.method == 'POST':
+    #     a =request.form.get('SQ')
+    #     print(a)
+    #     a = "丈八"
+    #     print(a)
+    #     list, links = mytest.cypshangquan(a)
+    #     b = json.dumps({'list': list, 'links': links})
+    #     # print(b)
+    #     return b
+    list, links = mytest.cypshangquan(a)
+    b = json.dumps({'list': list, 'links': links})
+    # print(b)
+    return b
+    #return list,links
+
+
+
+@app.route('/p', methods=['GET', 'POST'])
+def get_POIYeardata():
+    if request.method == "GET":
+        return render_template("poi.html")
+    if request.method =="POST":
+        a = request.form.get('shangquan')
+        print("zhejiushi1:".format(), a)
+        print("over!")
+
+@app.route('/fit', methods=['POST'])
+def fit():
+    nl = request.form.get('node_label')
+    nn = request.form.get('node_name')
+    rl = request.form.get('rel_label')
+    g = graph.Graph()
+    g.set_properties()
+    n = g.get_nodes()
+    return {n}
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+index:
+<!DOCTYPE html>
+<html style="height: 100%">
+
+<head>
+    <meta charset="utf-8">
+    <title>时空大数据</title>
+    <script src="static/js/jquery-3.3.1.js"></script>
+    <!-- 引入jquery.js -->
+    <script src="static/js/echarts.min.js"></script>
+    <script src="{{ url_for('static', filename='jquery-3.5.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='echarts.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">
+</head>
+<body>
+
+<form action=""  method="POST">
+        <p>输入商圈：<input type="text" name="SQ" > </p>
+        <button type="submit">提交</button>
+</form>
+
+<div id="main" style="width:1800px;height:850px">  </div>
+
+
+<script type="text/javascript">
+
+    $.get('/data/{{ a }}').done(function (data) {
+            jsondata = JSON.parse(data)//把获取到的json数据解析出来
+
+            {#console.log("test: ", jsondata);#}
+            var list = [];
+            for(var i = 0; i < jsondata.list.length; i++) {
+                if(list.length == 0) {
+                    list.push(jsondata.list[i]);
+                } else {
+                    var flag = true;
+                    var len = list.length;
+                    for(var j = 0; j < len; j++) {
+                        if(list[j].name == jsondata.list[i].name) {
+                            flag = false;
+                            break;
+                        }
+                    }
+                    if(flag) {
+                        list.push(jsondata.list[i]);
+                    }
+                }
+            }
+            {#console.log("list: ", list);#}
+            var myChart = echarts.init(document.getElementById('main'));
+            var categories = [];
+            for (var i = 0; i < 6; i++) {
+                categories[i] = {
+                    name: 'POI种类' + i
+                };
+            }
+            option = {
+                // 图的标题
+                title: {
+                    text: '图的标题'
+                },
+                // 提示框的配置
+                tooltip: {
+                    formatter: function (x) {
+                        return x.data.des;
+                    }
+                },
+                // 工具箱
+                toolbox: {
+                    // 显示工具箱
+                    show: true,
+                    feature: {
+                        mark: {
+                            show: true
+                        },
+                        // 还原
+                        restore: {
+                            show: true
+                        },
+                        // 保存为图片
+                        saveAsImage: {
+                            show: true
+                        }
+                    }
+                },
+                legend: [{
+                    // selectedMode: 'single',
+                    data: categories.map(function (a) {
+                        return a.name;
+                    })
+                }],
+                series: [{
+                    type: 'graph', // 类型:关系图
+                    layout: 'force', //图的布局，类型为力导图
+                    symbolSize: 20, // 调整节点的大小
+                    roam: true, // 是否开启鼠标缩放和平移漫游。默认不开启。如果只想要开启缩放或者平移,可以设置成 'scale' 或者 'move'。设置成 true 为都开启
+                    edgeSymbol: ['circle', 'arrow'],
+                    edgeSymbolSize: [2, 10],
+                    edgeLabel: {
+                        normal: {
+                            textStyle: {
+                                fontSize: 8
+                            }
+                        }
+                    },
+                    force: {
+                        repulsion: 800,
+                        edgeLength: [5, 15]
+                    },
+                    draggable: true,
+                    focusNodeAdjacency: true,
+                    lineStyle: {
+                        normal: {
+                            width: 2,
+                            color: '#4b565b',
+                        }
+                    },
+                    edgeLabel: {
+                        normal: {
+                            show: true,
+                            formatter: function (x) {
+                                return x.data.name;
+                            }
+                        }
+                    },
+                    label: {
+                        normal: {
+                            show: true,
+                            textStyle: {}
+                        }
+                    },
+
+                    // 数据
+                    data:list,
+                    links:jsondata.links,
+                    categories: categories,
+                }]
+            };
+            myChart.setOption(option);
+    });
+
+</script>
+</body>
+
+</html>
+
+
+
+
+POI.html:
+
+<!DOCTYPE html>
+<html>
+    <script src="static/js/echarts.js"></script>
+    <script src="static/js/jquery-3.3.1.js"></script>
+    <!-- 引入jquery.js -->
+    <script src="static/echarts.min.js"></script>
+    <script src="{{ url_for('static', filename='jquery-3.5.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='echarts.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">
+
+
+</table>
+<div class="container">
+    <div  class="header" id="chartmain" style="border:2px solid #666;width:49%;height:450px;" >  </div>
+    <div class="footer" id ="bing" style="border:2px solid #666;width:49%;height:450px;">  </div>>
+</div>
+
+
+<script type="text/javascript">
+    var myChart = echarts.init(document.getElementById('chartmain'));
+      $.get('/SQdata').done(function(data) {
+        jsondata = JSON.parse(data);
+        alert(jsondata.SQName);
+     })
+
+
+{#         jsondata = JSON.parse(mydata)//把获取到的json数据解析出来#}
+{#         alert(jsondata)#}
+{#       var data = [#}
+{#           [49, 143, 90],#}
+{#      [49, 143, 90],#}
+{#      [49, 143, 90],#}
+{#      [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90],#}
+{#     [49, 143, 90], [49, 143, 90]#}
+{#      ];#}
+{#    var cities = ['丈八', '未央路沿线', '小寨', '小雁塔', '钟楼/鼓楼', '高新路沿线', '曲江新区', '电子城', '西安交大东校区', '李家村', '民乐园', '浐灞生态区', '雁翔路', '太华路沿线', '长安区', '长乐坊', '金花路沿线', '辛家庙', '红庙坡', '文景路'];#}
+{#    var barHeight = 50;#}
+{#option = {#}
+{#    title: {#}
+{#        text: '',#}
+{#        subtext: '(新城区POI)'#}
+{#    },#}
+{#    legend: {#}
+{#        show: true,#}
+{#        data: ['价格范围', '均值']#}
+{#    },#}
+{#    grid: {#}
+{#        top: 100#}
+{#    },#}
+{#    angleAxis: {#}
+{#        type: 'category',#}
+{#        data: cities#}
+{#    },#}
+{#    tooltip: {#}
+{#        show: true,#}
+{#        formatter: function (params) {#}
+{#            var id = params.dataIndex;#}
+{#            return cities[id] + '<br>'+cities[id]+':' + data[id][0] + '<br>最高：' + data[id][1] + '<br>平均：' + data[id][2];#}
+{#        }#}
+{#    },#}
+{#    radiusAxis: {#}
+{#    },#}
+{#    polar: {#}
+{#    },#}
+{#    series: [{#}
+{#        type: 'bar',#}
+{#        itemStyle: {#}
+{#            color: 'transparent'#}
+{#        },#}
+{#        data: data.map(function (d) {#}
+{#            return d[0];#}
+{#        }),#}
+{#        coordinateSystem: 'polar',#}
+{#        stack: '最大最小值',#}
+{#        silent: true#}
+{#    }, {#}
+{#        type: 'bar',#}
+{#        data: data.map(function (d) {#}
+{#            return d[1] - d[0];#}
+{#        }),#}
+{#        coordinateSystem: 'polar',#}
+{#        name: '价格范围',#}
+{#        stack: '最大最小值'#}
+{#    }, {#}
+{#        type: 'bar',#}
+{#        itemStyle: {#}
+{#            color: 'transparent'#}
+{#        },#}
+{#        data: data.map(function (d) {#}
+{#            return d[2] - barHeight;#}
+{#        }),#}
+{#        coordinateSystem: 'polar',#}
+{#        stack: '均值',#}
+{#        silent: true,#}
+{#        z: 10#}
+{#    }, {#}
+{#        type: 'bar',#}
+{#        data: data.map(function (d) {#}
+{#            return barHeight * 2;#}
+{#        }),#}
+{#        coordinateSystem: 'polar',#}
+{#        name: '均值',#}
+{#        stack: '均值',#}
+{#        barGap: '-100%',#}
+{#        z: 10#}
+{#    }]#}
+{##}
+
+{# myChart.setOption(option);#}
+
+
+</script>
+
+
+
+
+
+
+
+
+
+<script>
+
+    var myChart = echarts.init(document.getElementById('bing'));
+    $.get('/SQ').done(function (data) {
+    var xData = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+    var lineData = [100, 100, 100, 100, 100, 100, 100]
+    var lastYearData = [3, 20, 62, 34, 55, 65, 33];
+    var thisYearData = [11, 38, 23, 39, 66, 66, 79];
+    var timeLineData = [1];
+    let legend = ['2017', '2018'];
+    var background = "#0e2147"; //背景
+    let textColor = "#fff";
+    let lineColor = "rgba(255,255,255,0.2)";
+    let colors = [{
+            borderColor: "rgba(227,161,96,1)",
+            start: "rgba(227,161,96,0.8)",
+            end: "rgba(227,161,96,0.3)"
+        },
+        {
+            borderColor: "rgba(0,222,255,1)",
+            start: "rgba(0,222,255,0.3)",
+            end: "rgba(0,222,255,0.8)"
+        },
+    ];
+    let borderData = [];
+    let scale = 2;
+    borderData = xData.map(item => {
+        return scale;
+    });
+    var option = {
+        baseOption: {
+            backgroundColor: background,
+            timeline: {
+                show: false,
+                top: 0,
+                data: []
+            },
+            legend: {
+                top: '5%',
+                right: '5%',
+                itemWidth: 20,
+                itemHeight: 5,
+                // itemGap: 343,
+                icon: 'horizontal',
+                textStyle: {
+                    color: '#ffffff',
+                    fontSize: 20,
+                },
+                data: legend
+            },
+            grid: [{
+                show: false,
+                left: '5%',
+                top: '10%',
+                bottom: '8%',
+                containLabel: true,
+                width: '37%'
+            }, {
+                show: false,
+                left: '51%',
+                top: '10%',
+                bottom: '8%',
+                width: '0%'
+            }, {
+                show: false,
+                right: '2%',
+                top: '10%',
+                bottom: '8%',
+                containLabel: true,
+                width: '37%'
+            }],
+            xAxis: [{
+                type: 'value',
+                inverse: true,
+                axisLine: {
+                    show: false
+                },
+                axisTick: {
+                    show: false
+                },
+                position: 'top',
+                axisLabel: {
+                    show: true,
+                    color: textColor
+                },
+                splitLine: {
+                    show: true,
+                    lineStyle: {
+                        color: lineColor
+                    }
+                },
+            }, {
+                gridIndex: 1,
+                show: false
+            }, {
+                gridIndex: 2,
+                axisLine: {
+                    show: false
+                },
+                axisTick: {
+                    show: false
+                },
+                position: 'top',
+                axisLabel: {
+                    show: true,
+                    color: textColor
+                },
+                splitLine: {
+                    show: true,
+                    lineStyle: {
+                        color: lineColor
+                    }
+                },
+            }],
+            yAxis: [{
+                type: 'category',
+                inverse: true,
+                position: 'right',
+                axisLine: {
+                    show: true,
+                    lineStyle: {
+                        color: lineColor
+                    }
+                },
+
+                axisTick: {
+                    show: false
+                },
+                axisLabel: {
+                    show: false
+                },
+                data: xData
+            }, {
+                gridIndex: 1,
+                type: 'category',
+                inverse: true,
+                position: 'left',
+                axisLine: {
+                    show: false
+                },
+                axisTick: {
+                    show: false
+                },
+                axisLabel: {
+                    show: true,
+                    padding: [30, 0, 0, 0],
+                    textStyle: {
+                        color: '#ffffff',
+                        fontSize: 20
+                    },
+                    align: "center"
+
+                },
+                data: xData.map(function(value) {
+                    return {
+                        value: value,
+                        textStyle: {
+                            align: 'center'
+                        }
+                    }
+                })
+            }, {
+                gridIndex: 2,
+                type: 'category',
+                inverse: true,
+                position: 'left',
+                axisLine: {
+                    show: true,
+                    lineStyle: {
+                        color: lineColor
+                    }
+                },
+                axisTick: {
+                    show: false
+                },
+                axisLabel: {
+                    show: false
+
+                },
+                data: xData
+            }],
+            series: []
+
+        },
+        options: []
+    }
+
+    option.baseOption.timeline.data.push(timeLineData[0])
+    option.options.push({
+        series: [{
+                name: "2017",
+                type: "bar",
+                barWidth: 25,
+                stack: "1",
+                itemStyle: {
+                    normal: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{
+                                offset: 0,
+                                color: colors[0].start
+                            },
+                            {
+                                offset: 1,
+                                color: colors[0].end
+                            }
+                        ]),
+                    }
+                },
+                label: {
+                    normal: {
+                        show: false,
+                    }
+                },
+                data: lastYearData,
+                animationEasing: "elasticOut"
+            },
+            {
+                name: "2017",
+                type: "bar",
+                barWidth: 25,
+                stack: "1",
+                itemStyle: {
+                    normal: {
+                        color: colors[0].borderColor
+
+                    }
+                },
+                data: borderData
+            },
+            {
+                name: "2018",
+                type: "bar",
+                stack: "2",
+                barWidth: 25,
+                xAxisIndex: 2,
+                yAxisIndex: 2,
+                itemStyle: {
+                    normal: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{
+                                offset: 0,
+                                color: colors[1].start
+                            },
+                            {
+                                offset: 1,
+                                color: colors[1].end
+                            }
+                        ]),
+                    }
+                },
+                label: {
+                    normal: {
+                        show: false,
+                    }
+                },
+                data: thisYearData,
+                animationEasing: "elasticOut"
+            },
+            {
+                name: "2018",
+                type: "bar",
+                xAxisIndex: 2,
+                yAxisIndex: 2,
+                barWidth: 25,
+                stack: "2",
+                itemStyle: {
+                    normal: {
+                        color: colors[1].borderColor
+
+                    }
+                },
+                data: borderData
+            },
+        ]
+    });
+    myChart.setOption(option);
+    })
+
+</script>
+
+</body>
+</html>
+
+圈里面mark：
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>新城区POI</title>
+
+    <style type="text/css">
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+<canvas id="canvas"></canvas>
+
+<script type="text/javascript" src="//apps.bdimg.com/libs/jquery/2.1.1/jquery.min.js"></script>
+<script type="text/javascript" src="//api.map.baidu.com/api?v=2.0&ak=1XjLLEhZhQNUzd93EjU5nOGQ"></script>
+<script type="text/javascript" src="../build/mapv.js"></script>
+
+<script type="text/javascript">
+
+    // 百度地图API功能
+    var map = new BMap.Map("map", {
+        enableMapClick: false
+    });    // 创建Map实例
+
+    var point = new BMap.Point(109.00275, 34.25102);
+
+    map.centerAndZoom(new BMap.Point(109.00275, 34.25102), 13);  // 初始化地图,设置中心点坐标和地图级别
+
+    var circle = new BMap.Circle(point, 4325, {
+        fillOpacity: 0.3,
+        strokeOpacity: 0.5,
+        strokeWeight: 1,
+        strokeStyle: 'dashed',
+        strokeColor: 'blue'
+    });
+
+    map.addOverlay(circle);
+
+    map.enableScrollWheelZoom(true); // 开启鼠标滚轮缩放
+
+    map.setMapStyle({
+        styleJson: [
+            {
+                "featureType": "all",
+                "elementType": "all",
+                "stylers": {
+                    "lightness": 61,
+                    "saturation": -70
+                }
+            }
+        ]
+    });
+
+
+
+    {#$.get('data/poi-yiheyuan-meishi.json', function(data) {#}
+    {##}
+    {#    var dataSet = new mapv.DataSet(data);#}
+    {##}
+    {#    var options = {#}
+    {#        fillStyle: 'rgba(180, 80, 80, 0.5)',#}
+    {#        size: 3,#}
+    {#        draw: 'simple'#}
+    {#    }#}
+    {##}
+    {#    var mapvLayer = new mapv.baiduMapLayer(map, dataSet, options);#}
+    {##}
+
+
+    //新建三个地图上点
+    var points = [
+
+ {"lng":109.02743, "lat":34.24998, "id":1,"name":"p1"},
+ {"lng":109.02611, "lat":34.24989, "id":1,"name":"p1"},
+ {"lng":109.01707, "lat":34.24071, "id":1,"name":"p1"},
+ {"lng":109.01744, "lat":34.24069, "id":1,"name":"p1"},
+ {"lng":109.01762, "lat":34.24071, "id":1,"name":"p1"},
+ {"lng":109.01785, "lat":34.24044, "id":1,"name":"p1"},
+ {"lng":109.01656, "lat":34.24046, "id":1,"name":"p1"},
+ {"lng":109.01643, "lat":34.24045, "id":1,"name":"p1"},
+ {"lng":109.01735, "lat":34.24042, "id":1,"name":"p1"},
+ {"lng":109.01808, "lat":34.24043, "id":1,"name":"p1"},
+ {"lng":109.02187, "lat":34.24043, "id":1,"name":"p1"},
+ {"lng":109.01808, "lat":34.2407 , "id":1,"name":"p1"},
+ {"lng":109.01751, "lat":34.24044, "id":1,"name":"p1"},
+ {"lng":109.01736, "lat":34.24069, "id":1,"name":"p1"},
+ {"lng":109.00978, "lat":34.24605, "id":1,"name":"p1"},
+ {"lng":109.01099, "lat":34.24326, "id":1,"name":"p1"},
+ {"lng":109.01623, "lat":34.24476, "id":1,"name":"p1"},
+ {"lng":109.01623, "lat":34.24348, "id":1,"name":"p1"},
+ {"lng":109.01623, "lat":34.24331, "id":1,"name":"p1"},
+ {"lng":109.01626, "lat":34.24319, "id":1,"name":"p1"},
+ {"lng":109.01623, "lat":34.24339, "id":1,"name":"p1"},
+ {"lng":109.01623, "lat":34.24371, "id":1,"name":"p1"},
+ {"lng":109.01624, "lat":34.24381, "id":1,"name":"p1"},
+ {"lng":109.01626, "lat":34.24315, "id":1,"name":"p1"},
+ {"lng":109.01623, "lat":34.24345, "id":1,"name":"p1"},
+ {"lng":109.01624, "lat":34.24363, "id":1,"name":"p1"},
+ {"lng":109.01623, "lat":34.24356, "id":1,"name":"p1"},
+ {"lng":109.01623, "lat":34.24351, "id":1,"name":"p1"},
+ {"lng":109.01624, "lat":34.24324, "id":1,"name":"p1"},
+ {"lng":109.01623, "lat":34.24375, "id":1,"name":"p1"},
+ {"lng":109.01623, "lat":34.24353, "id":1,"name":"p1"},
+ {"lng":109.01624, "lat":34.24337, "id":1,"name":"p1"},
+ {"lng":109.01623, "lat":34.24341, "id":1,"name":"p1"},
+ {"lng":109.01624, "lat":34.24369, "id":1,"name":"p1"},
+ {"lng":109.01618, "lat":34.2438 , "id":1,"name":"p1"},
+ {"lng":109.01415, "lat":34.2499 , "id":1,"name":"p1"},
+ {"lng":109.01418, "lat":34.2498 , "id":1,"name":"p1"},
+ {"lng":109.01414, "lat":34.24994, "id":1,"name":"p1"},
+ {"lng":109.01415, "lat":34.24987, "id":1,"name":"p1"},
+ {"lng":109.01416, "lat":34.24963, "id":1,"name":"p1"},
+ {"lng":109.01414, "lat":34.2492 , "id":1,"name":"p1"},
+ {"lng":109.01416, "lat":34.24869, "id":1,"name":"p1"},
+ {"lng":109.01416, "lat":34.24963, "id":1,"name":"p1"},
+ {"lng":109.01415, "lat":34.24909, "id":1,"name":"p1"},
+ {"lng":109.01414, "lat":34.24895, "id":1,"name":"p1"},
+ {"lng":109.01414, "lat":34.24887, "id":1,"name":"p1"},
+ {"lng":109.01414, "lat":34.24893, "id":1,"name":"p1"},
+ {"lng":109.01419, "lat":34.24959, "id":1,"name":"p1"},
+ {"lng":109.01415, "lat":34.249  , "id":1,"name":"p1"},
+ {"lng":109.01416, "lat":34.24935, "id":1,"name":"p1"},
+ {"lng":109.01417, "lat":34.24872, "id":1,"name":"p1"},
+ {"lng":109.01444, "lat":34.24893, "id":1,"name":"p1"},
+ {"lng":109.01414, "lat":34.2489 , "id":1,"name":"p1"},
+ {"lng":109.01416, "lat":34.24876, "id":1,"name":"p1"},
+ {"lng":109.01414, "lat":34.24884, "id":1,"name":"p1"},
+ {"lng":109.01416, "lat":34.24905, "id":1,"name":"p1"},
+ {"lng":109.01416, "lat":34.2488 , "id":1,"name":"p1"},
+ {"lng":109.01187, "lat":34.24917, "id":1,"name":"p1"},
+ {"lng":109.01183, "lat":34.24848, "id":1,"name":"p1"},
+ {"lng":109.01177, "lat":34.24912, "id":1,"name":"p1"},
+ {"lng":109.0118, "lat":4.24892 , "id":1,"name":"p1"},
+ {"lng":109.01103, "lat":34.24877, "id":1,"name":"p1"},
+ {"lng":109.01182, "lat":34.24863, "id":1,"name":"p1"},
+ {"lng":109.0116, "lat":4.24874 , "id":1,"name":"p1"},
+ {"lng":109.00673, "lat":34.24805, "id":1,"name":"p1"},
+ {"lng":109.00663, "lat":34.24838, "id":1,"name":"p1"},
+ {"lng":109.01277, "lat":34.24588, "id":1,"name":"p1"},
+ {"lng":109.01411, "lat":34.24551, "id":1,"name":"p1"},
+ {"lng":109.0131, "lat":4.24846 , "id":1,"name":"p1"},
+ {"lng":109.02043, "lat":34.2466 , "id":1,"name":"p1"},
+ {"lng":109.00723, "lat":34.2494 , "id":1,"name":"p1"},
+ {"lng":109.00667, "lat":34.24957, "id":1,"name":"p1"},
+ {"lng":109.00672, "lat":34.2494 , "id":1,"name":"p1"},
+ {"lng":109.00664, "lat":34.2475 , "id":1,"name":"p1"},
+ {"lng":109.00663, "lat":34.24761, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01049, "lat":34.24509, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01035, "lat":34.24445, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01047, "lat":34.24515, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01029, "lat":34.24431, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01041, "lat":34.24469, "id":1,"name":"p1"},
+ {"lng":109.01188, "lat":34.24294, "id":1,"name":"p1"},
+ {"lng":109.01627, "lat":34.24974, "id":1,"name":"p1"},
+ {"lng":109.01629, "lat":34.2494 , "id":1,"name":"p1"},
+ {"lng":109.01627, "lat":34.24986, "id":1,"name":"p1"},
+ {"lng":109.01627, "lat":34.24967, "id":1,"name":"p1"},
+ {"lng":109.01627, "lat":34.2498 , "id":1,"name":"p1"},
+ {"lng":109.01628, "lat":34.249  , "id":1,"name":"p1"},
+ {"lng":109.01627, "lat":34.24899, "id":1,"name":"p1"},
+ {"lng":109.01193, "lat":34.2495 , "id":1,"name":"p1"},
+ {"lng":109.01193, "lat":34.24936, "id":1,"name":"p1"},
+ {"lng":109.01185, "lat":34.24994, "id":1,"name":"p1"},
+ {"lng":109.01185, "lat":34.24978, "id":1,"name":"p1"},
+ {"lng":109.01185, "lat":34.2499 , "id":1,"name":"p1"},
+ {"lng":109.01185, "lat":34.24994, "id":1,"name":"p1"},
+ {"lng":109.01184, "lat":34.24983, "id":1,"name":"p1"},
+ {"lng":109.01162, "lat":34.24957, "id":1,"name":"p1"},
+ {"lng":109.01185, "lat":34.24994, "id":1,"name":"p1"},
+ {"lng":109.01185, "lat":34.24994, "id":1,"name":"p1"},
+ {"lng":109.01193, "lat":34.2495 , "id":1,"name":"p1"},
+ {"lng":109.01057, "lat":34.24907, "id":1,"name":"p1"},
+ {"lng":109.01057, "lat":34.24907, "id":1,"name":"p1"},
+ {"lng":109.01057, "lat":34.24907, "id":1,"name":"p1"},
+ {"lng":109.01057, "lat":34.24907, "id":1,"name":"p1"},
+ {"lng":109.01628, "lat":34.24074, "id":1,"name":"p1"},
+ {"lng":109.0163, "lat":4.24088 , "id":1,"name":"p1"},
+ {"lng":109.01627, "lat":34.2408 , "id":1,"name":"p1"},
+ {"lng":109.01627, "lat":34.24104, "id":1,"name":"p1"},
+ {"lng":109.00646, "lat":34.24838, "id":1,"name":"p1"},
+ {"lng":109.0127, "lat":4.24531 , "id":1,"name":"p1"},
+ {"lng":109.01208, "lat":34.24545, "id":1,"name":"p1"},
+ {"lng":109.013	 , "lat": 34.2466,"id":1,"name":"p1"},
+ {"lng":109.01645, "lat":34.24505, "id":1,"name":"p1"},
+ {"lng":109.01626, "lat":34.24523, "id":1,"name":"p1"},
+ {"lng":109.01666, "lat":34.24501, "id":1,"name":"p1"},
+ {"lng":109.01801, "lat":34.24577, "id":1,"name":"p1"},
+ {"lng":109.01799, "lat":34.24594, "id":1,"name":"p1"},
+ {"lng":109.01778, "lat":34.24655, "id":1,"name":"p1"},
+ {"lng":109.01778, "lat":34.24655, "id":1,"name":"p1"},
+ {"lng":109.0166, "lat":4.24613 , "id":1,"name":"p1"},
+ {"lng":109.01646, "lat":34.24548, "id":1,"name":"p1"},
+ {"lng":109.01791, "lat":34.24654, "id":1,"name":"p1"},
+ {"lng":109.02233, "lat":34.24641, "id":1,"name":"p1"},
+ {"lng":109.02157, "lat":34.24638, "id":1,"name":"p1"},
+ {"lng":109.02177, "lat":34.24637, "id":1,"name":"p1"},
+ {"lng":109.02085, "lat":34.2464 , "id":1,"name":"p1"},
+ {"lng":109.02209, "lat":34.24635, "id":1,"name":"p1"},
+ {"lng":109.02075, "lat":34.2464 , "id":1,"name":"p1"},
+ {"lng":109.02093, "lat":34.24641, "id":1,"name":"p1"},
+ {"lng":109.02166, "lat":34.24637, "id":1,"name":"p1"},
+ {"lng":109.02105, "lat":34.24641, "id":1,"name":"p1"},
+ {"lng":109.02146, "lat":34.24638, "id":1,"name":"p1"},
+ {"lng":109.02133, "lat":34.24638, "id":1,"name":"p1"},
+ {"lng":109.02892, "lat":34.24908, "id":1,"name":"p1"},
+ {"lng":109.01625, "lat":34.23839, "id":1,"name":"p1"},
+ {"lng":109.00628, "lat":34.24822, "id":1,"name":"p1"},
+ {"lng":109.00661, "lat":34.24588, "id":1,"name":"p1"},
+ {"lng":109.00672, "lat":34.24458, "id":1,"name":"p1"},
+ {"lng":109.00663, "lat":34.24512, "id":1,"name":"p1"},
+ {"lng":109.00666, "lat":34.24483, "id":1,"name":"p1"},
+ {"lng":109.00673, "lat":34.24452, "id":1,"name":"p1"},
+ {"lng":109.02896, "lat":34.24957, "id":1,"name":"p1"},
+ {"lng":109.02915, "lat":34.24942, "id":1,"name":"p1"},
+ {"lng":109.01154, "lat":34.24462, "id":1,"name":"p1"},
+ {"lng":109.01154, "lat":34.24597, "id":1,"name":"p1"},
+ {"lng":109.01154, "lat":34.2459 , "id":1,"name":"p1"},
+ {"lng":109.01154, "lat":34.24504, "id":1,"name":"p1"},
+ {"lng":109.01183, "lat":34.24545, "id":1,"name":"p1"},
+ {"lng":109.01153, "lat":34.24518, "id":1,"name":"p1"},
+ {"lng":109.01154, "lat":34.24523, "id":1,"name":"p1"},
+ {"lng":109.01154, "lat":34.24462, "id":1,"name":"p1"},
+ {"lng":109.01154, "lat":34.24462, "id":1,"name":"p1"},
+ {"lng":109.01154, "lat":34.24512, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01124, "lat":34.24364, "id":1,"name":"p1"},
+ {"lng":109.01139, "lat":34.24348, "id":1,"name":"p1"},
+ {"lng":109.01133, "lat":34.24335, "id":1,"name":"p1"},
+ {"lng":109.01188, "lat":34.24699, "id":1,"name":"p1"},
+
+    ];
+
+var poiname =[
+"爱来客便利                 "  ,
+"西安宇拓电气有限公司       "  ,
+"鹏达粮油店                 "  ,
+"陕西申通快递西影路分公司   "  ,
+"耀涛乒乓球专业培训中心     "  ,
+"普颂汽车维修连锁西安分公司 "  ,
+"东方客栈                   "  ,
+"树生文化日用百货           "  ,
+"宇鑫物流                   "  ,
+"联保锅炉供水设备制造公司   "  ,
+"西安普天天线有限公司       "  ,
+"陕西力大商贸公司           "  ,
+"胖哥手撕椒麻鸡             "  ,
+"隆兴川菜馆                 "  ,
+"西安市工商局新城分局公园南路" ,
+"东二环世纪金源大酒店       "  ,
+"建工路                     "  ,
+"美都美发型设计幸福路店     "  ,
+"西安晁医师眼镜建工路东口店 "  ,
+"华美国际头领店             "  ,
+"美之源房产                 "  ,
+"绝味鸭脖华清学府城店       "  ,
+"丰巢                       "  ,
+"张存伟道口烧鸡华清学府城店 "  ,
+"中国联通ｖｉｖｏ专卖       "  ,
+"百丝特洗衣·生活馆         "  ,
+"古城樊氏肉夹馍幸福南路店   "  ,
+"ＯＫ大鸡排西安华清学府城店 "  ,
+"格力ＮＯ．４４５           "  ,
+"松林便利连锁ＮＯ．０４１   "  ,
+"每一天便利店               "  ,
+"中国邮政便民驿站华鑫学府城店" ,
+"中国移动４Ｇ体验店         "  ,
+"小红冒冒菜                 "  ,
+"华清学府１自行车租赁点     "  ,
+"金马鸡汤刀削面纬什街店     "  ,
+"纬什街冷批                 "  ,
+"天福超市                   "  ,
+"鑫豪服饰                   "  ,
+"宏远照相馆                 "  ,
+"庆华驾校万寿南路报名联络点 "  ,
+"圆通速递曲江新区网点       "  ,
+"陕西关中驾校报名处         "  ,
+"先锋开锁                   "  ,
+"快乐宝贝                   "  ,
+"明明发艺工作室             "  ,
+"时尚依恋                   "  ,
+"东方１０１小区东自行车租赁点" ,
+"扬州理发                   "  ,
+"纬什街                     "  ,
+"彩票销售店                 "  ,
+"纬什街                     "  ,
+"时尚美妆精品专卖           "  ,
+"丰元化妆品                 "  ,
+"西安新城秋梅诊所           "  ,
+"双虎劳保五金               "  ,
+"四季鲜水果店               "  ,
+"东方宾馆                   "  ,
+"西安市东方中学             "  ,
+"一零五街坊                 "  ,
+"西安银行ＡＴＭ             "  ,
+"西安市公共交通第三公司家属院坊",
+"东方中学自行车租赁点       "  ,
+"公交三公司家属院自行车租赁点" ,
+"解放军第５１８医院口腔中心 "  ,
+"公园南路中段               "  ,
+"东方社区１０３街坊         "  ,
+"东方社区１０３街坊东门     "  ,
+"１０２小区                 "  ,
+"西安建筑科技大学华清学院   "  ,
+"西北工业集团１０５街坊     "  ,
+"停车场                     "  ,
+"西安市新城区东方社区服务站 "  ,
+"中国工商银行西安咸宁路支行 "  ,
+"中国工商银行ＡＴＭ         "  ,
+"西安市高新区新城科技产业园管" ,
+"陕西省人才服务中心东高新区分" ,
+"西安市新城区国税局高新税务所" ,
+"陕西省老科学技术教育工作者协" ,
+"西安市地税局新城分局高新开发" ,
+"方舟生物科技有限公司       "  ,
+"中瑞电子技术有限公司       "  ,
+"车小二快修                 "  ,
+"圣天建筑工程科技公司       "  ,
+"城东供热有限责任公司       "  ,
+"西安军民两用光机电技术开发服" ,
+"本草源天然饮品有限公司     "  ,
+"新园图文快印产业园店       "  ,
+"东高新国税地税所           "  ,
+"西安高新区新城开发总公司   "  ,
+"西安福临物业管理有限公司   "  ,
+"西安亚路机电有限公司       "  ,
+"新城区老科协               "  ,
+"玄英安防科技有限公司       "  ,
+"厚西岐西府文化主题餐厅     "  ,
+"西安雅微电子公司           "  ,
+"天鼎医院有限责任公司       "  ,
+"新园产业大厦速递易         "  ,
+"西安市新城区发展总部经济办公" ,
+"圣丰网络科技有限公司       "  ,
+"鼎诺测控技术有限公司       "  ,
+"新城科技产业管理办公室     "  ,
+"东高新人才交流中心         "  ,
+"陕西国脉秦饮酒业营销有限公司" ,
+"新园产业大厦               "  ,
+"骏源电力科技有限公司       "  ,
+"公厕                       "  ,
+"重庆小面庄                 "  ,
+"风暴机车                   "  ,
+"公厕                       "  ,
+"珠峰车行                   "  ,
+"淳风车业                   "  ,
+"西安摩托城                 "  ,
+"公厕                       "  ,
+"东方四季游泳馆             "  ,
+"福园                       "  ,
+"高新前景外语学校西安咸宁路校" ,
+"魏老三牛羊肉泡馍           "  ,
+"古都华天家厨房ＮＯ．６     "  ,
+"高新前景中学优考学习中心   "  ,
+"鑫华盲人按摩               "  ,
+"一零五街坊                 "  ,
+"剑桥少儿英语培训机构       "  ,
+"剑桥少儿英语全国统一考试考点" ,
+"陕西省泳往直前游泳俱乐部东郊" ,
+"西安市东方医院             "  ,
+"西安市东方医院－急诊       "  ,
+"西安市东方医院－耳鼻咽喉科 "  ,
+"西安市新城区韩森寨东方社区卫" ,
+"彩票销售店                 "  ,
+"家伟商贸综合市场           "  ,
+"多多乐便利店               "  ,
+"华清学府城西南门           "  ,
+"公园南路中段               "  ,
+"开心壹佰便利店             "  ,
+"东方社区菜场               "  ,
+"西安东方幼儿园             "  ,
+"西安建大科技产业公司建科物业" ,
+"老钢厂设计创意产业园       "  ,
+"西安银行ＡＴＭ             "  ,
+"西安建筑科技大学华清学院－图" ,
+"大学生活动中心             "  ,
+"薯乐休闲吧                 "  ,
+"西安建筑科技大学华清学院－学" ,
+"西安建筑科技大学艺术学院－学厅 ",
+"报刊亭                     "  ,
+"中国建设银行ＡＴＭ         "  ,
+"ｓｗｅｅｔ餐厅             "  ,
+"幸福味                     "  ,
+"西光眼镜                   "  ,
+"中国电信全网通手机卖场     "  ,
+"魅力坊发型创作室           "  ,
+"多乐购                     "  ,
+"百姓水果超市               "  ,
+"宝岛眼镜校园店             "  ,
+"大洋摄影工作室             "  ,
+"美格发型美甲工作室         "  ,
+"一品香西饼                 "  ,
+"西安宝昌汽车服务有限公司   "  ,
+"康宁路                     "  ,
+"公园南路中段               "  ,
+"上和商业广场２自行车租赁点 "  ,
+"绝味鸭脖上和广场店         "  ,
+"公园南路人人乐门前路东侧停车" ,
+"上和商业广场１自行车租赁点 "  ,
+"８天连锁便利店             "  ,
+"东城桃园西南门             "  ,
+"西安新城春晓幼儿园         "  ,
+"西安秦森科技有限公司       "  ,
+"怡康医药超市新科路店       "  ,
+"西安新城许富盛诊所         "  ,
+"鸿海专业汽车维修           "  ,
+"尉记串串驾到新科路总店     "  ,
+"西安ＡＢＣ培训中心         "  ,
+"壹传壹                     "  ,
+"西安翔瑞电气制造公司       "  ,
+"陕西华茂仪表有限公司       "  ,
+"车小二快修车漆快修汽车美容整" ,
+"陕西世纪金源大饭店         "  ,
+"金世纪中餐厅               "  ,
+"金源自助餐厅               "  ,
+"世纪金源大饭店－亚洲风味餐厅" ,
+"御景庭大堂酒廊             "  ,
+"慧鉴服饰品鉴中心           "  ,
+"世纪金源大饭店－票务中心   "  ,
+"世纪金源大饭店－国际厅     "  ,
+"世纪金源大饭店－宴会厅     "  ,
+"世纪金源大饭店－咖啡厅     "  ,
+"世纪金源大饭店－美容美发   "  ,
+"世纪金源大饭店－商务中心   "  ,
+"世纪金源大饭店－商品部     "  ,
+"世纪金源大饭店－首长接见厅 "  ,
+"世纪金源大饭店－行政酒廊   "  ,
+"世纪金源大饭店－会议室     "  ,
+"中国银行ＡＴＭ             "  ,
+"艺亭香                     "  ,
+"仙游黄宫古典家具（西安分店）" ,
+"中国建设银行ＡＴＭ         "  ,
+"世纪金源大饭店停车场       "  ,
+"新城区东方小学             " ,
+"西安翔瑞电气制造公司       "  ,
+"陕西华茂仪表有限公司       "  ,
+"车小二快修车漆快修汽车美容整" ,
+"陕西世纪金源大饭店         "  ,
+"金世纪中餐厅               "  ,
+"金源自助餐厅               "  ,
+"世纪金源大饭店－亚洲风味餐厅" ,
+"御景庭大堂酒廊             "  ,
+"慧鉴服饰品鉴中心           "  ,
+"世纪金源大饭店－票务中心   "  ,
+"世纪金源大饭店－国际厅     "  ,
+"世纪金源大饭店－宴会厅     "  ,
+"世纪金源大饭店－咖啡厅     "  ,
+"世纪金源大饭店－美容美发   "  ,
+"世纪金源大饭店－商务中心   "  ,
+"世纪金源大饭店－商品部     "  ,
+"世纪金源大饭店－首长接见厅 "  ,
+"世纪金源大饭店－行政酒廊   "  ,
+"世纪金源大饭店－会议室     "  ,
+"中国银行ＡＴＭ             "  ,
+"艺亭香                     "  ,
+"仙游黄宫古典家具（西安分店）" ,
+"中国建设银行ＡＴＭ         "  ,
+"世纪金源大饭店停车场       "  ,
+"新城区东方小学             "
+]
+
+
+    //创建标注点并添加到地图中
+    function addMarker(points) {
+        //循环建立标注点
+        for(var i=0, pointsLen = points.length; i<pointsLen; i++) {
+            points[i].name =poiname[i];
+            points[i].id = i;
+            var point = new BMap.Point(points[i].lng, points[i].lat); //将标注点转化成地图上的点
+
+            var marker = new BMap.Marker(point); //将点转化成标注点
+            map.addOverlay(marker);  //将标注点添加到地图上
+            //添加监听事件
+            (function() {
+                var thePoint = points[i];
+                marker.addEventListener("click",
+                    function() {
+                        showInfo(this,thePoint);
+                    });
+            })();
+        }
+    }
+    function showInfo(thisMarker,point) {
+        //获取点的信息
+        var sContent =
+            '<ul style="margin:0 0 5px 0;padding:0.2em 0">'
+            +'<li style="line-height: 26px;font-size: 15px;">'
+            +'<span style="width: 50px;display: inline-block;">id：</span>' + point.id + '</li>'
+            +'<li style="line-height: 26px;font-size: 15px;">'
+            +'<span style="width: 50px;display: inline-block;">名称：</span>' + point.name + '</li>'
+            +'<li style="line-height: 26px;font-size: 15px;"><span style="width: 50px;display: inline-block;">查看：</span><a href="'+point.url+'">详情</a></li>'
+            +'</ul>';
+        var infoWindow = new BMap.InfoWindow(sContent); //创建信息窗口对象
+        thisMarker.openInfoWindow(infoWindow); //图片加载完后重绘infoWindow
+    }
+    //创建地图
+    {#var map = new BMap.Map("map");#}
+    map.centerAndZoom(new BMap.Point(109.00275, 34.25102), 11);  // 设置中心点
+    map.addControl(new BMap.MapTypeCfontrol());
+    map.enableScrollWheelZoom(true);
+    addMarker(points);
+</script>
+
+</body>
+</html>
+
+
+高德地图 -- 加载csv上的所有点：
+ <script>
+
+
+
+        $.get('../poiData/14spr新城poi.csv', function (data) {
+            var map = new AMap.Map('container', {
+                mapStyle: 'amap://styles/1de318cbb8d12c02303a22c550b9ccc9',
+                zoom: 14,
+                center: [108.99714,34.25554],
+                features: ['bg', 'road'],
+                // Loca 自 1.2.0 起 viewMode 模式默认为 3D，如需 2D 模式，请显示配置。
+                // viewMode: '3D'
+            });
+
+            var layer = new Loca.PointLayer({
+                map: map
+            });
+
+            layer.setData(data, {
+               // lnglat: '经纬度',
+                // 或者使用回调函数构造经纬度坐标
+
+                lnglat: function (obj) {
+                     var value = obj.value;
+                     var lnglat = [value['GEOMETRY#SDO_POINT#X'], value['GEOMETRY#SDO_POINT#Y']];
+                     return lnglat;
+                 },
+
+                // 指定数据类型
+                type: 'csv'
+            });
+
+            layer.setOptions({
+                style: {
+                    // 圆形半径，单位像素
+                    radius: 3,
+                    // 填充颜色
+                    color: '#5DFBF9',
+                    // 描边颜色
+                    borderColor: '#5DFBF9',
+                    // 描边宽度，单位像素
+                    borderWidth: 1,
+                    // 透明度 [0-1]
+                    opacity: 1,
+                }
+            });
+
+            layer.render();
+        });
+
+
+    </script>
+
+百度：0Dl57WTxbnozZbNEW0L0UEBF0KEc6XPU
+高德：eb99c6d6dc8f631eac7da956f7e30ac3
+

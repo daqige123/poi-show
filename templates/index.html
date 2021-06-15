@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+
+<head>
+    <meta charset="utf-8">
+    <title>时空大数据</title>
+    <script src="static/js/jquery-3.3.1.js"></script>
+    <!-- 引入jquery.js -->
+    <script src="static/js/echarts.min.js"></script>
+    <script src="{{ url_for('static', filename='jquery-3.5.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='echarts.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">
+</head>
+<body>
+
+<form action="/"  method="POST">
+        <p>输入商圈：<input type="text" name="SQ" > </p>
+        <button type="submit">提交</button>
+</form>
+
+<div id="main" style="width:1800px;height:850px">  </div>
+
+
+<script type="text/javascript">
+
+    $.get('/data/{{ a }}').done(function (data) {
+            jsondata = JSON.parse(data)//把获取到的json数据解析出来
+
+            {#console.log("test: ", jsondata);#}
+            var list = [];
+            for(var i = 0; i < jsondata.list.length; i++) {
+                if(list.length == 0) {
+                    list.push(jsondata.list[i]);
+                } else {
+                    var flag = true;
+                    var len = list.length;
+                    for(var j = 0; j < len; j++) {
+                        if(list[j].name == jsondata.list[i].name) {
+                            flag = false;
+                            break;
+                        }
+                    }
+                    if(flag) {
+                        list.push(jsondata.list[i]);
+                    }
+                }
+            }
+            {#console.log("list: ", list);#}
+            var myChart = echarts.init(document.getElementById('main'));
+            var categories = [];
+            for (var i = 0; i < 6; i++) {
+                categories[i] = {
+                    name: 'POI种类' + i
+                };
+            }
+            option = {
+                // 图的标题
+                title: {
+                    text: '图的标题'
+                },
+                // 提示框的配置
+                tooltip: {
+                    formatter: function (x) {
+                        return x.data.des;
+                    }
+                },
+                // 工具箱
+                toolbox: {
+                    // 显示工具箱
+                    show: true,
+                    feature: {
+                        mark: {
+                            show: true
+                        },
+                        // 还原
+                        restore: {
+                            show: true
+                        },
+                        // 保存为图片
+                        saveAsImage: {
+                            show: true
+                        }
+                    }
+                },
+                legend: [{
+                    // selectedMode: 'single',
+                    data: categories.map(function (a) {
+                        return a.name;
+                    })
+                }],
+                series: [{
+                    type: 'graph', // 类型:关系图
+                    layout: 'force', //图的布局，类型为力导图
+                    symbolSize: 20, // 调整节点的大小
+                    roam: true, // 是否开启鼠标缩放和平移漫游。默认不开启。如果只想要开启缩放或者平移,可以设置成 'scale' 或者 'move'。设置成 true 为都开启
+                    edgeSymbol: ['circle', 'arrow'],
+                    edgeSymbolSize: [2, 10],
+                    edgeLabel: {
+                        normal: {
+                            textStyle: {
+                                fontSize: 8
+                            }
+                        }
+                    },
+                    force: {
+                        repulsion: 800,
+                        edgeLength: [5, 15]
+                    },
+                    draggable: true,
+                    focusNodeAdjacency: true,
+                    lineStyle: {
+                        normal: {
+                            width: 2,
+                            color: '#4b565b',
+                        }
+                    },
+                    edgeLabel: {
+                        normal: {
+                            show: true,
+                            formatter: function (x) {
+                                return x.data.name;
+                            }
+                        }
+                    },
+                    label: {
+                        normal: {
+                            show: true,
+                            textStyle: {}
+                        }
+                    },
+
+                    // 数据
+                    data:list,
+                    links:jsondata.links,
+                    categories: categories,
+                }]
+            };
+            myChart.setOption(option);
+    });
+
+</script>
+</body>
+
+</html>

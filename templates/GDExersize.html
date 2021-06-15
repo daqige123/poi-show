@@ -1,0 +1,46 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="//a.amap.com/Loca/static/dist/jquery.min.js"></script>
+</head>
+
+<body>
+
+<div id="test">
+    <button  onclick=send()>点击1</button>
+</div>
+<div id="a">
+    1234
+</div>
+
+
+
+<script>
+    var years = [2014,2015];
+    var kinds = [1,2,3,4];
+
+  function send(){
+      alert("发送了")
+      $.ajax({
+        type: "post", //数据发送的方式（post 或者 get）
+        url: "/GDdata", //要发送的后台地址
+        data: JSON.stringify({'kinds':kinds, 'years':years}), //要发送的数据（参数）格式为{'val1':"1","val2":"2"}
+        dataType: "json", //后台处理后返回的数据格式
+
+        success: function(data) {//ajax请求成功后触发的方法
+            document.getElementById("a").innerText=data.name
+            alert(data["kinds"])
+            alert(data["years"])
+            alert('请求成功');
+        },
+        error: function() {//ajax请求失败后触发的方法
+            alert("失败"); //弹出错误信息
+        }
+    });
+
+  }
+
+</script>
+</body>
+</html>>

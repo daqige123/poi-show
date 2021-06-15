@@ -1,0 +1,28 @@
+.content{
+    width: 100%;
+    /*高度自动,因为嵌套的div高度不确定,所以这里设置自动*/
+    height: auto;
+    background-color: #5e5e5e;
+}
+/*顶部div*/
+.top{
+    width: 400px;
+    height: 200px;
+    background-color: #00ffcc;
+    margin-left: 50%;
+    /*需要设置绝对定位,才能用left*/
+    position: relative;
+    /*这里需要看width多少,left的值等于width的一半*/
+    left: -200px;
+}
+/*底部div*/
+.bottom{
+    width: 400px;
+    height: 200px;
+    background-color: blueviolet;
+    /*这里*/
+    margin-left: 50%;
+    position: relative;
+    /*这里需要看width多少,left的值等于width的一半*/
+    left: -200px;
+}

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>新城区poi</title>
+    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css"/>
+    <script src="//unpkg.com/vue/dist/vue.js"></script>
+    <script src="//unpkg.com/element-ui@2.14.1/lib/index.js"></script>
+
+    <script src="//a.amap.com/Loca/static/dist/jquery.min.js"></script>
+    <script src="https://webapi.amap.com/maps?v=1.4.15&key=eb99c6d6dc8f631eac7da956f7e30ac3"></script>
+    <script src="//webapi.amap.com/loca?v=1.3.2&key=eb99c6d6dc8f631eac7da956f7e30ac3"></script>
+    <script type="text/javascript" src='https://a.amap.com/jsapi_demos/static/citys.js'></script>
+    <script src="//a.amap.com/jsapi_demos/static/resource/heatmapData.js"></script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=您申请的key值&plugin=AMap.Adaptor"></script>
+
+    <style>
+        @import url("//unpkg.com/element-ui@2.14.1/lib/theme-chalk/index.css");
+
+        html, body, #container {
+            height: 95%;
+            width: 100%;
+        }
+
+        .input-card .btn {
+            margin-right: 1.2rem;
+            width: 9rem;
+        }
+
+        .input-card .btn:last-child {
+            margin-right: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="container" class="map"></div>
+
+<div class="input-card">
+    <h4>趋势变化</h4>
+    <div class="input-item">
+        <input type="button" class="btn" value="不变的点" onclick='deng()'/>
+        <input type="button" class="btn" value="增加的点" onclick='zen()'/>
+        <input type="button" class="btn" value="减少的点" onclick='jian()'/>
+
+    </div>
+
+</div>
+<div id="app">
+    <template>
+        <div class="block">
+            <el-slider
+                    v-model="value"
+                    range
+                    show-stops
+                    :max="19"
+                    :min="14"
+                    @change="duzhi">
+            </el-slider>
+        </div>
+    </template>
+</div>
+
+<h4>选择poi的种类：</h4>
+<br>
+<input type="checkbox" id="sel2" value="批发、零售">批发、零售
+<input type="checkbox" id="sel2" value="餐饮">餐饮
+<input type="checkbox" id="sel2" value="居民服务">居民服务
+<input type="checkbox" id="sel2" value="交通运输、仓储">交通运输、仓储
+<input type="checkbox" id="sel2" value="住、宿">住、宿
+<input type="checkbox" id="sel2" value="公司企业">公司企业
+<input type="checkbox" id="sel2" value="教育、文化">教育、文化
+<input type="checkbox" id="sel2" value="运动、休闲">运动、休闲
+<input type="checkbox" id="sel2" value="金融、保险">金融、保险
+<input type="checkbox" id="sel2" value="政府、团体">政府、团体
+
+<input type="checkbox" id="sel2" value="商业设施、商务服务">商业设施、商务服务
+<input type="checkbox" id="sel2" value="卫生、社保">卫生、社保
+<input type="checkbox" id="sel2" value="汽车销售及服务">汽车销售及服务
+<input type="checkbox" id="sel2" value="科研及技术服务">科研及技术服务
+<input type="checkbox" id="sel2" value="农、林、牧、渔业">农、林、牧、渔业
+
+<br>
+<button>全选</button>
+<button>全不选</button>
+<button>反选</button>
+
+<div id="test">
+    <button onclick="send()">提交</button>
+    <input type="button" class="btn" value="热力图增" onclick='relizen()'/>
+    <input type="button" class="btn" value="热力图不变" onclick='relideng()'/>
+    <input type="button" class="btn" value="热力图减" onclick='relijian()'/>
+</div>
+
+<script>
+
+
+    var years = [16, 17];
+
+
+    var asel2 = document.querySelectorAll("#sel2");
+    var abtn = document.querySelectorAll("button")
+
+    //全选
+    abtn[0].onclick = function () {
+        for (var i = 0; i < asel2.length; i++) {
+            asel2[i].checked = true;
+        }
+    }
+    //全不选
+    abtn[1].onclick = function () {
+        for (var i = 0; i < asel2.length; i++) {
+            asel2[i].checked = false;
+        }
+    }
+
+    //反选
+    abtn[2].onclick = function () {
+        for (var i = 0; i < asel2.length; i++) {
+            if (asel2[i].checked) {
+                asel2[i].checked = false;
+            } else {
+                asel2[i].checked = true;
+            }
+        }
+    }
+
+
+    var Main = {
+        data() {
+            return {
+                value: [16, 17]
+            }
+        },
+        methods: {
+            duzhi: function (value) {
+
+                years[0] = value[0];
+                years[1] = value[1];
+            }
+        }
+    }
+
+    var Ctor = Vue.extend(Main)
+    new Ctor().$mount('#app')
+
+
+    function send() {
+        var kinds = [];
+        for (var i = 0; i < asel2.length; i++) {
+            if (asel2[i].checked == true) {
+                kinds.push(asel2[i].value);
+            }
+        }
+         alert(kinds);
+        // alert(years);
+        $.ajax({
+            type: "post", // 数据发送的方式（post 或者 get）
+            url: "/GDdata", //要发送的后台地址
+            data: JSON.stringify({'kinds': kinds, 'years': years}), //要发送的数据（参数）格式为{'val1':"1","val2":"2"}
+            dataType: "json", //后台处理后返回的数据格式
+
+            success: function (data) {//ajax请求成功后触发的方法
+                //alert("成功！");
+
+                // 取后端传来的数据字段
+                var datadeng = data["deng"];
+                var datajian = data["jian"];
+                var datazen = data["zen"];
+
+                var datarelizen = data["relizen"]
+                var datarelideng = data["relideng"]
+                var datarelijian = data["relijian"]
+                // 移除了mass层 再重绘， 不然先前的点不会消失
+                map.remove(mass1);
+                map.remove(mass2);
+                map.remove(mass3);
+                //mass1.hide();
+                //mass2.hide();
+
+                mass1.setData(datadeng);
+                mass2.setData(datajian);
+                mass3.setData(datazen);
+
+                mass1.setMap(map);
+                mass2.setMap(map);
+                mass3.setMap(map);
+
+                // 用marker的事件来展示点的图标
+                var marker = new AMap.Marker({map: map, position: new AMap.LngLat(116.39, 39.9)});
+
+                mass1.on('mouseover', function (e) {
+                    marker.setPosition(e.data.lnglat);
+                    marker.setLabel({content: e.data.name + " 地址：" + e.data.dizhi + e.data.lnglat});
+
+                });
+                mass2.on('mouseover', function (e) {
+                    marker.setPosition(e.data.lnglat);
+                    marker.setLabel({content: e.data.name + " 地址：" + e.data.dizhi + e.data.lnglat});
+
+                });
+
+                mass3.on('mouseover', function (e) {
+                    marker.setPosition(e.data.lnglat);
+                    marker.setLabel({content: e.data.name + " 地址：" + e.data.dizhi + e.data.lnglat});
+
+                });
+
+                // 热力图数据格式 [{'lng': '108.94839', 'lat': '34.28616', 'count': 1},]
+
+                map.plugin(["AMap.Heatmap"], function () {      //加载热力图插件
+
+                    heatmapzen = new AMap.Heatmap(map, {
+                        radius: 50, //给定半径
+                        opacity: [0, 0.8],
+
+                        gradient: {
+                            0.5: 'blue',
+                            0.65: 'rgb(117,211,248)',
+                            0.995: 'rgb(0, 255, 0)',
+                            //0.995: '#ffea00',
+                            1.0: 'red'
+                        }
+
+                    });    //在地图对象叠加热力图
+
+                    heatmapzen.setDataSet({data: datarelizen}); //设置热力图数据集
+                    //具体参数见接口文档
+
+                });
+
+
+
+                 map.plugin(["AMap.Heatmap"], function () {      //加载热力图插件
+
+                    heatmapdeng = new AMap.Heatmap(map, {
+                        radius: 50, //给定半径
+                        opacity: [0, 0.8],
+
+                        gradient: {
+                            0.5: 'gray',
+                            0.65: 'rgb(117,211,248)',
+                            0.7: 'rgb(0, 255, 0)',
+                            0.995: '#ffea00',
+                            1.0: 'pink'
+                        }
+
+                    });    //在地图对象叠加热力图
+
+                    heatmapdeng.setDataSet({data: datarelideng}); //设置热力图数据集
+                    //具体参数见接口文档
+
+                });
+
+                  map.plugin(["AMap.Heatmap"], function () {      //加载热力图插件
+
+                    heatmapjian = new AMap.Heatmap(map, {
+                        radius: 50, //给定半径
+                        opacity: [0, 0.8],
+
+                        gradient: {
+                            0.5: 'black',
+
+                            0.995: '#ffea00',
+                            1.0: 'blue'
+                        }
+
+                    });    //在地图对象叠加热力图
+
+                    heatmapjian.setDataSet({data: datarelijian}); //设置热力图数据集
+                    //具体参数见接口文档
+
+                });
+
+
+                //heatmapzen.hide();
+            },
+            error: function () {//ajax请求失败后触发的方法
+                alert("失败"); //弹出错误信息
+            }
+        })
+    }
+
+
+    var map = new AMap.Map('container', {
+        mapStyle: 'amap://styles/1de318cbb8d12c02303a22c550b9ccc9',
+        zoom: 15,
+        center: [108.99205, 34.27727],
+        features: ['bg', 'road'],
+        //Loca自1.2.0起viewMode模式默认为3D，如需2D模式，请显示配置。
+        //viewMode:'3D'
+    });
+
+    var style = [{
+        url: 'http://vdata.amap.com/icons/b18/1/2.png',
+        anchor: new AMap.Pixel(6, 6),
+        size: new AMap.Size(10, 10),
+        zIndex: 3,
+    }, {
+        url: 'https://webapi.amap.com/images/mass/mass2.png',
+        anchor: new AMap.Pixel(4, 4),
+        size: new AMap.Size(10, 10),
+        zIndex: 2,
+    }, {
+        url: 'http://a.amap.com/jsapi_demos/static/images/blue.png',
+        anchor: new AMap.Pixel(3, 3),
+        size: new AMap.Size(10, 10),
+        zIndex: 1,
+    }
+    ];
+
+    var data = []
+    mass1 = new AMap.MassMarks(data, {
+        opacity: 0.8,
+        zIndex: 111,
+        cursor: 'pointer',
+        style: style
+    });
+    mass2 = new AMap.MassMarks(data, {
+        opacity: 0.8,
+        zIndex: 111,
+        cursor: 'pointer',
+        style: style
+    });
+    mass3 = new AMap.MassMarks(data, {
+        opacity: 0.8,
+        zIndex: 111,
+        cursor: 'pointer',
+        style: style
+    });
+    mass1.setData(data);
+    mass2.setData(data);
+    mass3.setData(data);
+
+    mass1.setMap(map);
+    mass2.setMap(map);
+    mass3.setMap(map);
+
+    // 点隐藏
+    var countdeng = 2;
+    var countjian = 2;
+    var countzen = 2;
+    function deng() {
+
+        if (countdeng % 2 == 0)
+            mass1.hide();
+        else {
+            mass1.show();
+        }
+        countdeng = countdeng + 1;
+    }
+
+    function jian() {
+        if (countjian % 2 == 0)
+            mass2.hide();
+        else {
+            mass2.show();
+        }
+        countjian = countjian + 1;
+    }
+
+    function zen() {
+        if (countzen % 2 == 0)
+            mass3.hide();
+        else {
+            mass3.show();
+        }
+        countzen = countzen + 1;
+    }
+
+    // 热力图隐藏
+    var counterlizen = 1;
+    function relizen(){
+        if(counterlizen % 2 ==0)
+            heatmapzen.show();
+        else{
+            heatmapzen.hide();
+        }
+        counterlizen++;
+    }
+    var counterlideng = 1;
+    function relideng(){
+        if(counterlideng % 2 ==0)
+            heatmapdeng.show();
+        else{
+            heatmapdeng.hide();
+        }
+        counterlideng++;
+    }
+    var counterlijian = 1;
+    function relijian(){
+        if(counterlijian % 2 ==0)
+            heatmapjian.show();
+        else{
+            heatmapjian.hide();
+        }
+        counterlijian++;
+    }
+
+    var heatmapzen;
+    var heatmapdeng;
+    var heatmapjian;
+
+
+</script>
+</body>
+
+</html>
